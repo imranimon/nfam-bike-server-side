@@ -21,6 +21,7 @@ async function run() {
         const productCollection = database.collection("products");
         const userCollection = database.collection("users");
         const orderCollection = database.collection("orders");
+        const reviewCollection = database.collection("reviews");
 
 
 
@@ -51,6 +52,12 @@ async function run() {
             res.json(result);
         })
 
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await productCollection.deleteOne(query);
+            res.json(result);
+        })
 
 
         // User related api starts here
@@ -81,11 +88,11 @@ async function run() {
         });
 
         app.put('/users/admin', async (req, res) => {
-            const user = req.body.requestedEmail
+            const newAdmin = req.body.email
             const requester = req.body.requester;
             const requesterAcccount = await userCollection.findOne({ email: requester })
             if (requesterAcccount.role === 'admin') {
-                const filter = { email: user.email }
+                const filter = { email: newAdmin }
                 const updateDoc = { $set: { role: 'admin' } };
                 const result = await userCollection.updateOne(filter, updateDoc);
                 res.json(result);
@@ -116,6 +123,39 @@ async function run() {
             res.json(result);
         });
 
+        app.put('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedOrder = req.body;
+            const query = { _id: ObjectId(id) }
+            const updateOrder = {
+                $set: {
+                    status: updatedOrder.status
+                },
+            };
+            const result = await orderCollection.updateOne(query, updateOrder)
+            res.json(result)
+        })
+        app.delete('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await orderCollection.deleteOne(query);
+            res.json(result);
+        })
+
+
+
+        //Review related api
+        app.get('/reviews', async (req, res) => {
+            const cursor = reviewCollection.find({})
+            reviews = await cursor.toArray();
+            res.json(reviews)
+        })
+
+        app.post('/reviews', async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.json(result);
+        });
 
         //Check database connection
         app.get('/db', (req, res) => {
